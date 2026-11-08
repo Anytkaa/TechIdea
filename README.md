@@ -7,7 +7,7 @@
 *   **Бэкенд:** Python 3.11, Django 5, Django Channels, Daphne
 *   **База данных:** PostgreSQL 15, Redis (для WebSocket)
 *   **Фронтенд:** HTML, CSS, Vanilla JS, React (для доски)
-*   **Инфраструктура:** Docker, Docker Compose, Nginx (для продакшена)
+*   **Инфраструктура:** Docker, Docker Compose
 
 ## Как запустить (через Docker)
 
