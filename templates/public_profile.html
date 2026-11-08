@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Профиль: {{ profile_user.first_name }}{% endblock %}
+
+{% block content %}
+    <div style="max-width: 800px; margin: 0 auto;">
+        <div class="card" style="display: flex; gap: 2rem; align-items: flex-start; padding: 3rem;">
+            
+            <!-- Аватар -->
+            <div style="flex-shrink: 0;">
+                <div style="width: 150px; height: 150px; background: #ECFDF5; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 4rem; color: var(--accent); font-weight: bold; overflow: hidden; border: 4px solid white; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);">
+                    {% if profile_user.photo %}
+                        <img src="{{ profile_user.photo.url }}" alt="Фото" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        {{ profile_user.first_name|first|default:profile_user.username|first|upper }}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Информация -->
+            <div style="flex-grow: 1;">
+                <h1 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--text-main);">{{ profile_user.first_name }} {{ profile_user.last_name }}</h1>
+                <span style="background: #ECFDF5; color: var(--accent); padding: 0.3rem 0.8rem; border-radius: 6px; font-size: 0.9rem; font-weight: 600;">{{ profile_user.get_role_display }}</span>
+                
+                {% if profile_user.about %}
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 0.5rem;">О себе</h3>
+                    <p style="color: var(--text-muted); line-height: 1.6;">{{ profile_user.about }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Достижения -->
+                <div style="margin-top: 2rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1rem;">Достижения и сертификаты</h3>
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        {% for att in attachments %}
+                            <div style="display: flex; align-items: center; gap: 0.8rem; padding: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB;">
+                                <span style="font-size: 1.2rem;">📄</span>
+                                <a href="{{ att.file.url }}" target="_blank" style="font-size: 0.95rem; color: var(--accent); text-decoration: none; font-weight: 500;">
+                                    {{ att.file.name|slice:"12:" }}
+                                </a>
+                            </div>
+                        {% empty %}
+                            <p style="color: var(--text-muted); font-size: 0.95rem;">Пользователь пока не загрузил достижения.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

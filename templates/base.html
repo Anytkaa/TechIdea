@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tech Idea Hub{% endblock %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --bg-light: #F9FAFB;
+            --surface: #FFFFFF;
+            --accent: #059669;
+            --accent-hover: #047857;
+            --text-main: #111827;
+            --text-muted: #6B7280;
+            --border-light: #F3F4F6;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.04);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Manrope', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-light); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column;
+        }
+        
+        .card {
+            background: var(--surface);
+            border-radius: 20px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
+            padding: 2rem;
+        }
+
+        header {
+            background: var(--surface);
+            padding: 0 2rem; height: 72px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: 100;
+        }
+        
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--text-main); text-decoration: none; letter-spacing: -0.5px; }
+        .logo span { color: var(--accent); }
+        
+        .nav-tabs { display: flex; gap: 0.5rem; height: 100%; }
+        .nav-tabs a {
+            text-decoration: none; color: var(--text-muted); font-weight: 600; font-size: 0.95rem;
+            display: flex; align-items: center; border-bottom: 2px solid transparent;
+            transition: all 0.2s; padding: 0 1rem;
+        }
+        .nav-tabs a:hover { color: var(--text-main); }
+        .nav-tabs a.active { color: var(--accent); border-bottom-color: var(--accent); }
+        
+        .user-menu { display: flex; align-items: center; gap: 1rem; }
+        .user-name { font-weight: 600; font-size: 0.95rem; color: var(--text-main); }
+        .btn-logout { color: #EF4444; text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+        
+        main { flex: 1; padding: 2rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+        
+        /* Уведомления */
+        .notification-bell { position: relative; cursor: pointer; font-size: 1.3rem; }
+        .notification-badge {
+            position: absolute; top: -2px; right: -5px; background: #EF4444; color: white;
+            border-radius: 50%; padding: 2px 6px; font-size: 0.65rem; font-weight: bold;
+            box-shadow: 0 0 0 2px var(--surface);
+        }
+        .notification-dropdown {
+            display: none; position: absolute; top: 45px; right: 0; background: var(--surface);
+            border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 320px; z-index: 200;
+            border: 1px solid var(--border-light); overflow: hidden;
+        }
+        .notification-dropdown.active { display: block; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-light); font-size: 0.9rem; }
+        .notification-item:last-child { border-bottom: none; }
+        .notification-item.unread { background: #F0FDF4; }
+        .notification-item:hover { background: #F9FAFB; }
+
+        /* Кнопки */
+        .btn-primary {
+            background: var(--accent); color: white; padding: 0.75rem 1.5rem; border-radius: 12px;
+            font-weight: 700; border: none; cursor: pointer; transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+            text-decoration: none; display: inline-block; text-align: center;
+        }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(5, 150, 105, 0.3); }
+        
+        .btn-outline {
+            background: transparent; color: var(--text-main); padding: 0.75rem 1.5rem; border-radius: 12px;
+            font-weight: 600; border: 1px solid #D1D5DB; cursor: pointer; transition: all 0.2s ease;
+            text-decoration: none; display: inline-block; text-align: center;
+        }
+        .btn-outline:hover { border-color: var(--text-main); background: #F9FAFB; }
+
+        /* --- МОБИЛЬНАЯ АДАПТАЦИЯ --- */
+        .mobile-menu-btn { display: none; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-main); }
+        .mobile-nav {
+            display: none; position: fixed; top: 72px; left: 0; width: 100%;
+            background: white; flex-direction: column; padding: 1rem; z-index: 99;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-light);
+        }
+        .mobile-nav.active { display: flex; }
+        .mobile-nav a { padding: 1rem; text-decoration: none; color: var(--text-main); font-weight: 600; border-bottom: 1px solid var(--border-light); }
+        
+        @media (max-width: 768px) {
+            header { padding: 0 1rem; height: 60px; }
+            .nav-tabs, .user-name { display: none; }
+            .mobile-menu-btn { display: block; }
+            .mobile-nav { top: 60px; }
+            main { padding: 1rem; }
+            .card { padding: 1.5rem; }
+            
+            /* Универсальное правило для всех сеток на мобильных */
+            div[style*="display: grid"], div[style*="display: flex"] {
+                flex-direction: column !important;
+                grid-template-columns: 1fr !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="{% url 'home' %}" class="logo">TECH<span>IDEA</span></a>
+        
+        {% if user.is_authenticated %}
+        <nav class="nav-tabs">
+            <a href="{% url 'home' %}" class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">Главная</a>
+            <a href="{% url 'board' %}" class="{% if 'board' in request.resolver_match.url_name %}active{% endif %}">Доска</a>
+            {% if user.projectmember_set.all %}
+                <a href="{% url 'case_room' user.projectmember_set.first.project.id %}" class="{% if request.resolver_match.url_name == 'case_room' %}active{% endif %}">Комната кейса</a>
+            {% else %}
+                <a href="#" style="opacity: 0.5; cursor: not-allowed;">Комната кейса</a>
+            {% endif %}
+            <a href="{% url 'profile' %}" class="{% if request.resolver_match.url_name == 'profile' %}active{% endif %}">Профиль</a>
+        </nav>
+        {% endif %}
+
+        <div class="user-menu">
+            {% if user.is_authenticated %}
+                <div class="notification-bell" onclick="toggleNotifications()">
+                    🔔
+                    {% if user.unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ user.unread_notifications_count }}</span>
+                    {% endif %}
+                    
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; background: #F9FAFB;">
+                            <strong style="font-size: 0.9rem; color: var(--text-main);">Уведомления</strong>
+                            <button onclick="markAllRead()" style="background: none; border: none; color: var(--accent); font-size: 0.8rem; cursor: pointer; font-weight: 700;">Прочитать все</button>
+                        </div>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                            {% for notif in user.notifications.all|slice:":10" %}
+                                <div class="notification-item {% if not notif.is_read %}unread{% endif %}" 
+                                     onclick="goToProject({{ notif.project_id }})" 
+                                     style="cursor: pointer;">
+                                    {{ notif.text }}
+                                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">{{ notif.created_at|date:"d M H:i" }}</div>
+                                </div>
+                            {% empty %}
+                                <div class="notification-item" style="text-align: center; color: var(--text-muted);">Нет уведомлений</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <span class="user-name">{{ user.first_name|default:user.username }}</span>
+                <a href="{% url 'logout' %}" class="btn-logout">Выйти</a>
+                
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+                <div class="mobile-nav" id="mobileNav">
+                    <a href="{% url 'home' %}">Главная</a>
+                    <a href="{% url 'board' %}">Доска</a>
+                    {% if user.projectmember_set.all %}
+                        <a href="{% url 'case_room' user.projectmember_set.first.project.id %}">Комната кейса</a>
+                    {% endif %}
+                    <a href="{% url 'profile' %}">Профиль</a>
+                    <a href="{% url 'logout' %}" style="color: #EF4444;">Выйти</a>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" style="text-decoration: none; color: var(--text-main); font-weight: 600; margin-right: 1rem;">Войти</a>
+                <a href="{% url 'register_idea' %}" class="btn-primary">Начать</a>
+            {% endif %}
+        </div>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script>
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown) dropdown.classList.toggle('active');
+        }
+
+        function markAllRead() {
+            fetch('/api/notifications/read/', {
+                method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'}
+            }).then(() => location.reload());
+        }
+
+        function goToProject(projectId) {
+            if (projectId) {
+                window.location.href = `/project/${projectId}/`;
+            } else {
+                document.getElementById('notificationDropdown').classList.remove('active');
+            }
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileNav').classList.toggle('active');
+        }
+
+        document.addEventListener('click', function(event) {
+            const bell = document.querySelector('.notification-bell');
+            const dropdown = document.getElementById('notificationDropdown');
+            if (bell && dropdown && !bell.contains(event.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

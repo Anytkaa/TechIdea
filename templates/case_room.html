@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.title }} — Комната кейса{% endblock %}
+
+{% block content %}
+    <style>
+        .kanban-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; align-items: flex-start; }
+        .kanban-col { background: #F3F4F6; border-radius: 16px; min-width: 240px; flex: 1; display: flex; flex-direction: column; }
+        .kanban-header { padding: 1rem; font-weight: 600; color: var(--text-main); border-bottom: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; }
+        .kanban-cards { padding: 1rem; flex: 1; min-height: 150px; }
+        .kanban-card { background: white; padding: 1rem; border-radius: 12px; margin-bottom: 0.8rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); font-size: 0.9rem; border: 1px solid #E5E7EB; position: relative; }
+        .kanban-card .assignee { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; background: #F3F4F6; display: inline-block; padding: 0.2rem 0.5rem; border-radius: 6px; }
+        .kanban-card .delete-btn { position: absolute; top: 0.5rem; right: 0.5rem; color: #EF4444; cursor: pointer; font-weight: bold; opacity: 0.5; }
+        .kanban-card .delete-btn:hover { opacity: 1; }
+        
+        .member-list { list-style: none; padding: 0; }
+        .member-list li { display: flex; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #F3F4F6; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 0.75rem; }
+        .status-online { background: #10B981; box-shadow: 0 0 8px #10B981; }
+
+        .achievement-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: #ECFDF5; color: var(--accent); border: 1px solid #A7F3D0;
+            padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;
+        }
+        .achievement-locked {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: #F3F4F6; color: var(--text-muted); padding: 0.5rem 1rem;
+            border-radius: 20px; font-weight: 600; font-size: 0.9rem; border: 1px dashed #D1D5DB;
+        }
+
+        /* Адаптация канбана */
+        @media (max-width: 768px) {
+            .kanban-col { min-width: 260px; }
+            .case-layout { flex-direction: column !important; }
+        }
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <div>
+            <h1 style="font-size: 1.8rem; color: var(--text-main);">{{ project.title }}</h1>
+            <p style="color: var(--text-muted);">Комната кейса / Канбан-доска проекта</p>
+        </div>
+    </div>
+
+    <div class="card" style="padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+        <span style="font-weight: 600; color: var(--text-main);">Достижения:</span>
+        
+        {% if is_team_complete %}
+            <div class="achievement-badge">🏆 Команда в сборе (Идея + Наставник + Специалист + Консультант)</div>
+        {% else %}
+            <div class="achievement-locked" title="Пригласите все 4 роли, чтобы открыть">🔒 Команда в сборе (не хватает ролей)</div>
+        {% endif %}
+    </div>
+
+    <div class="case-layout" style="display: flex; gap: 1.5rem; align-items: flex-start; margin-bottom: 1.5rem;">
+        
+        <div style="flex: 3; min-width: 0;">
+            <div class="kanban-board">
+                {% for stage in stages %}
+                <div class="kanban-col">
+                    <div class="kanban-header">
+                        {{ stage.get_name_display }}
+                        <button onclick="addTask({{ stage.id }})" style="background: none; border: none; color: var(--accent); font-size: 1.2rem; cursor: pointer;" title="Добавить задачу">+</button>
+                    </div>
+                    <div class="kanban-cards" data-stage-id="{{ stage.id }}">
+                        {% for task in stage.tasks %}
+                        <div class="kanban-card">
+                            <span class="delete-btn" onclick="deleteTask({{ stage.id }}, '{{ task.id }}')">✕</span>
+                            <div style="padding-right: 1.5rem;">{{ task.text }}</div>
+                            
+                            {% if task.assignee and task.assignee != 'Не назначен' %}
+                                <div class="assignee">👤 {{ task.assignee }}</div>
+                            {% endif %}
+
+                            {% if task.files %}
+                            <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem;">
+                                {% for file in task.files %}
+                                    <a href="{{ file.url }}" target="_blank" style="display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: var(--accent); text-decoration: none; background: #ECFDF5; padding: 0.2rem 0.5rem; border-radius: 4px; max-width: fit-content;">
+                                        📎 {{ file.name|truncatechars:15 }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            
+                            <div style="margin-top: 0.5rem; text-align: right;">
+                                <label for="upload-task-{{ stage.id }}-{{ task.id }}" style="cursor: pointer; font-size: 0.8rem; color: var(--text-muted);">+ файл</label>
+                                <input type="file" id="upload-task-{{ stage.id }}-{{ task.id }}" onchange="uploadTaskFile({{ stage.id }}, '{{ task.id }}', this)" style="display: none;">
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card" style="flex: 1; min-width: 280px; padding: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="font-size: 1.1rem; color: var(--text-main);">Команда</h3>
+                {% if user == project.idea.owner %}
+                    <button onclick="addMember({{ project.id }})" class="btn-primary" style="padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem;">+ Добавить</button>
+                {% endif %}
+            </div>
+            <ul class="member-list">
+                {% for member in members %}
+                    <li>
+                        <span class="status-dot status-online"></span>
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-main);">
+                                <!-- Ссылка на публичный профиль из комнаты кейса -->
+                                <a href="{% url 'public_profile' member.user.id %}" style="text-decoration: none; color: inherit; transition: 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='inherit'">
+                                    {{ member.user.first_name|default:member.user.username }}
+                                </a>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ member.get_role_in_project_display }}</div>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    {% if user == project.idea.owner and pending_members %}
+    <div class="card" style="border: 1px solid #FDE68A; background: #FFFBEB; padding: 1.5rem; margin-bottom: 1.5rem;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: #92400E;">Заявки в команду</h3>
+        <ul style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 1rem;">
+            {% for req in pending_members %}
+                <li style="display: flex; justify-content: space-between; align-items: center; border: 1px solid #FDE68A; border-radius: 8px; padding: 0.8rem; background: white; min-width: 250px;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-main);">
+                            <a href="{% url 'public_profile' req.user.id %}" style="text-decoration: none; color: inherit;">{{ req.user.first_name|default:req.user.username }}</a>
+                        </div>
+                        <div style="font-size: 0.8rem; color: #92400E;">{{ req.get_role_in_project_display }}</div>
+                    </div>
+                    <div>
+                        <button onclick="handleRequest({{ req.id }}, 'accept')" style="background: #10B981; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">✓</button>
+                        <button onclick="handleRequest({{ req.id }}, 'decline')" style="background: #EF4444; color: white; border: none; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;">✕</button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="card" style="padding: 1.5rem;">
+        <h3 style="margin-bottom: 1rem; font-size: 1.1rem; color: var(--text-main);">Чат проекта</h3>
+        <div style="height: 250px; overflow-y: auto; background: #F9FAFB; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #E5E7EB;" id="chat-log">
+            {% for msg in chat_messages %}
+                <div style="margin-bottom: 0.8rem; font-size: 0.95rem; color: var(--text-main);">
+                    <strong style="color: var(--accent);">{{ msg.user.username }}:</strong> {{ msg.text }}
+                </div>
+            {% endfor %}
+        </div>
+        <input type="text" id="chat-input" style="width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 8px; outline: none; background: #F9FAFB;" placeholder="Написать сообщение...">
+    </div>
+
+    <div id="taskModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="card" style="padding: 2rem; width: 90%; max-width: 400px; background: white;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-main);">Новая задача</h3>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-muted);">Текст задачи:</label>
+                <input type="text" id="taskText" style="width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB;" placeholder="Что нужно сделать?">
+            </div>
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-muted);">Назначить участника:</label>
+                <select id="taskAssignee" style="width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB;">
+                    <option value="">-- Не назначать --</option>
+                    {% for member in members %}
+                        <option value="{{ member.user.id }}">{{ member.user.first_name|default:member.user.username }} ({{ member.get_role_in_project_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="closeTaskModal()" class="btn-outline" style="flex: 1;">Отмена</button>
+                <button onclick="submitTask()" class="btn-primary" style="flex: 1;">Создать</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        document.querySelectorAll('.kanban-cards').forEach(col => {
+            new Sortable(col, { group: 'kanban', animation: 150 });
+        });
+
+        let currentStageId = null;
+        function addTask(stageId) {
+            currentStageId = stageId;
+            document.getElementById('taskText').value = '';
+            document.getElementById('taskAssignee').value = '';
+            document.getElementById('taskModal').style.display = 'flex';
+        }
+        function closeTaskModal() {
+            document.getElementById('taskModal').style.display = 'none';
+        }
+        function submitTask() {
+            const text = document.getElementById('taskText').value.trim();
+            const assigneeId = document.getElementById('taskAssignee').value;
+            if (!text) return alert("Введите текст задачи!");
+            
+            fetch(`/api/stage/${currentStageId}/add-task/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: JSON.stringify({text: text, assignee_id: assigneeId})
+            }).then(res => res.json()).then(data => {
+                if (data.ok) { closeTaskModal(); location.reload(); }
+                else alert("Ошибка: " + data.error);
+            });
+        }
+
+        function deleteTask(stageId, taskId) {
+            if (!confirm("Удалить эту задачу?")) return;
+            fetch(`/api/stage/${stageId}/delete-task/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: JSON.stringify({task_id: taskId})
+            }).then(res => res.json()).then(data => { if (data.ok) location.reload(); });
+        }
+
+        function uploadTaskFile(stageId, taskId, input) {
+            if (!input.files || input.files.length === 0) return;
+            
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('task_id', taskId);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            const label = input.previousElementSibling;
+            const originalText = label.innerHTML;
+            label.innerHTML = '⏳ Загрузка...';
+
+            fetch(`/api/stage/${stageId}/upload-file/`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                    label.innerHTML = originalText;
+                }
+            })
+            .catch(err => {
+                alert('Ошибка сети');
+                label.innerHTML = originalText;
+            });
+        }
+
+        function addMember(projectId) {
+            const email = prompt("Введите email пользователя:");
+            if (!email) return;
+            const role = prompt("Введите роль (mentor, specialist, consultant):", "specialist");
+            if (!role) return;
+            fetch(`/api/project/${projectId}/add-member/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: JSON.stringify({email: email, role: role})
+            }).then(res => res.json()).then(data => {
+                if (data.ok) location.reload(); else alert("Ошибка: " + data.error);
+            });
+        }
+
+        function handleRequest(memberId, action) {
+            fetch(`/api/member/${memberId}/${action}/`, {
+                method: 'POST',
+                headers: {'X-CSRFToken': '{{ csrf_token }}'}
+            }).then(res => res.json()).then(data => {
+                if (data.ok) location.reload(); else alert('Ошибка: ' + data.error);
+            });
+        }
+
+        const projectId = {{ project.id }};
+        const chatSocket = new WebSocket('ws://' + window.location.host + '/ws/chat/' + projectId + '/');
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const chatLog = document.getElementById('chat-log');
+            chatLog.innerHTML += `<div style="margin-bottom: 0.8rem; font-size: 0.95rem; color: var(--text-main);"><strong style="color: var(--accent);">${data.user}:</strong> ${data.message}</div>`;
+            chatLog.scrollTop = chatLog.scrollHeight;
+        };
+
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const message = this.value.trim();
+                if (message) {
+                    chatSocket.send(JSON.stringify({ 'message': message }));
+                    this.value = '';
+                }
+            }
+        });
+    </script>
+{% endblock %}

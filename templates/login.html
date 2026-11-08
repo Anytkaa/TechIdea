@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход в систему — Tech Idea Hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #F3F4F6; display: flex; height: 100vh; }
+        
+        /* Левая панель (Обложка) */
+        .split-left {
+            flex: 1;
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            display: flex; flex-direction: column; justify-content: center; padding: 4rem;
+            color: white; position: relative; overflow: hidden;
+        }
+        .split-left h1 { font-size: 3rem; font-weight: 700; line-height: 1.2; margin-bottom: 1.5rem; z-index: 2; }
+        .split-left p { font-size: 1.2rem; opacity: 0.9; z-index: 2; max-width: 80%; }
+        .circle { position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1); }
+        .c1 { width: 300px; height: 300px; top: -50px; left: -50px; }
+        .c2 { width: 200px; height: 200px; bottom: -50px; right: 50px; }
+
+        /* Правая панель (Форма) */
+        .split-right {
+            flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem;
+        }
+        .form-card {
+            background: white; padding: 3rem; border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 450px;
+        }
+        .form-card h2 { font-size: 1.8rem; color: #111827; margin-bottom: 0.5rem; }
+        .form-card p.subtitle { color: #6B7280; margin-bottom: 2rem; font-size: 0.95rem; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 500; color: #374151; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .form-control {
+            width: 100%; padding: 0.85rem 1rem; border: 1.5px solid #E5E7EB; border-radius: 8px;
+            font-size: 1rem; transition: all 0.2s ease; outline: none;
+        }
+        .form-control:focus { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
+        
+        .btn-submit {
+            width: 100%; padding: 0.85rem; background: #4F46E5; color: white; border: none;
+            border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .btn-submit:hover { background: #4338CA; transform: translateY(-1px); }
+        
+        .bottom-links { margin-top: 2rem; text-align: center; font-size: 0.9rem; color: #6B7280; }
+        .bottom-links a { color: #4F46E5; text-decoration: none; font-weight: 600; }
+        .bottom-links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="split-left">
+        <div class="circle c1"></div>
+        <div class="circle c2"></div>
+        <h1>С возвращением в Tech Idea Hub</h1>
+        <p>Продолжайте работу над своим проектом, общайтесь с командой и отслеживайте прогресс.</p>
+    </div>
+
+    <div class="split-right">
+        <div class="form-card">
+            <h2>Вход в аккаунт</h2>
+            <p class="subtitle">Введите свои данные, чтобы продолжить.</p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" name="username" class="form-control" placeholder="Введите логин" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-submit">Войти в систему</button>
+            </form>
+
+            <div class="bottom-links">
+                Нет аккаунта? <a href="{% url 'register_idea' %}">Создать профиль</a>
+                <br><br>
+                <a href="{% url 'home' %}" style="color: #9CA3AF; font-weight: 500;">← На главную</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

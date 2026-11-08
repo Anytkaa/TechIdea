@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}Профиль — Tech Idea Hub{% endblock %}
+
+{% block content %}
+    <div style="max-width: 1000px; margin: 0 auto;">
+        <h1 style="font-size: 2rem; color: var(--text-main); margin-bottom: 2rem;">Личный кабинет</h1>
+        
+        <div class="profile-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+            
+            <div>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 0.8rem;">
+                            <div style="width: 100px; height: 100px; background: #ECFDF5; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; color: var(--accent); font-weight: bold; overflow: hidden; border: 2px solid var(--accent); box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);">
+                                {% if user.photo %}
+                                    <img src="{{ user.photo.url }}" alt="Фото профиля" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    {{ user.first_name|first|default:user.username|first|upper }}
+                                {% endif %}
+                            </div>
+
+                            <form method="post" action="{% url 'update_photo' %}" enctype="multipart/form-data" style="text-align: center;">
+                                {% csrf_token %}
+                                <label for="photo-upload" style="display: inline-block; background: #F3F4F6; color: var(--text-main); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1px solid #E5E7EB; transition: 0.2s;" onmouseover="this.style.background='#E5E7EB'" onmouseout="this.style.background='#F3F4F6'">
+                                    📷 Изменить
+                                </label>
+                                <input id="photo-upload" type="file" name="photo" accept="image/*" onchange="this.form.submit()" style="display: none;">
+                            </form>
+                        </div>
+
+                        <div>
+                            <h2 style="font-size: 1.5rem; margin-bottom: 0.3rem; color: var(--text-main);">{{ user.first_name|default:user.username }}</h2>
+                            <span style="background: #ECFDF5; color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600;">{{ user.get_role_display }}</span>
+                            <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 0.8rem;"><strong>Email:</strong> {{ user.email }}</p>
+                        </div>
+                    </div>
+
+                    {% if user.about %}
+                    <div style="background: #F9FAFB; padding: 1rem; border-radius: 8px; border: 1px solid #F3F4F6;">
+                        <p style="font-size: 0.9rem; color: var(--text-muted);"><strong>О себе:</strong> {{ user.about }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if user.role == 'idea_owner' and user.projectmember_set.first %}
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.2rem; color: var(--text-main);">Пригласить в команду</h3>
+                    <form method="post" action="{% url 'invite_team_member' user.projectmember_set.first.project.id %}">
+                        {% csrf_token %}
+                        <input type="email" name="email" placeholder="Email участника" style="width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 8px; margin-bottom: 1rem; background: #F9FAFB; outline: none;" required>
+                        <button type="submit" class="btn-primary" style="width: 100%;">Отправить приглашение</button>
+                    </form>
+                </div>
+                {% endif %}
+
+                <div class="card">
+                    <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;">
+                        <div style="width: 36px; height: 36px; background: #ECFDF5; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem;">🤖</div>
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin: 0; color: var(--text-main);">ИИ-Помощник</h3>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">Всегда онлайн</p>
+                        </div>
+                    </div>
+                    
+                    <div id="ai-chat-log" style="height: 200px; overflow-y: auto; background: #F9FAFB; border-radius: 8px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #F3F4F6; display: flex; flex-direction: column; gap: 0.8rem;">
+                        <div style="align-self: flex-start; background: #ECFDF5; color: var(--text-main); padding: 0.6rem 1rem; border-radius: 12px; border-bottom-left-radius: 2px; font-size: 0.9rem; max-width: 85%;">
+                            Привет! Я твой ИИ-помощник. Подскажу, как работать с платформой или помогу с идеей. Спроси меня о чем-нибудь!
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="text" id="ai-chat-input" placeholder="Задайте вопрос..." style="flex: 1; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 8px; outline: none; font-size: 0.9rem; background: #F9FAFB;">
+                        <button onclick="sendAiMessage()" class="btn-primary" style="padding: 0 1rem;">➤</button>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card" style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1.5rem; font-size: 1.2rem; color: var(--text-main);">Мои комнаты (Проекты)</h3>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                        {% for member in projects %}
+                            <div style="padding: 1rem; border: 1px solid #E5E7EB; border-radius: 12px; background: #F9FAFB; transition: 0.2s; position: relative;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='#E5E7EB'">
+                                
+                                {% if member.role_in_project == 'owner' %}
+                                    <button onclick="deleteProject({{ member.project.id }})" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #EF4444; opacity: 0.6; transition: 0.2s;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="Удалить проект">
+                                        🗑️
+                                    </button>
+                                {% endif %}
+
+                                <h4 style="margin-bottom: 0.5rem; color: var(--text-main); padding-right: 2rem;">{{ member.project.title }}</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Ваша роль: {{ member.get_role_in_project_display }}</p>
+                                <a href="{% url 'case_room' member.project.id %}" class="btn-primary" style="display: block; text-align: center; text-decoration: none;">Перейти в комнату</a>
+                            </div>
+                        {% empty %}
+                            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                                Вы пока не участвуете ни в одном проекте.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h3 style="font-size: 1.2rem; color: var(--text-main);">Мои достижения</h3>
+                        <form method="post" action="{% url 'upload_achievement' %}" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <label for="achievement-upload" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; cursor: pointer;">
+                                + Загрузить
+                            </label>
+                            <input id="achievement-upload" type="file" name="file" onchange="this.form.submit()" style="display: none;">
+                        </form>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        {% for att in user.attachments.all %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB;">
+                                <div style="display: flex; align-items: center; gap: 0.8rem; overflow: hidden;">
+                                    <span style="font-size: 1.2rem;">📄</span>
+                                    <a href="{{ att.file.url }}" target="_blank" style="font-size: 0.9rem; color: var(--accent); text-decoration: none; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;">
+                                        {{ att.file.name|slice:"12:" }}
+                                    </a>
+                                </div>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ att.uploaded_at|date:"d.m.Y" }}</span>
+                            </div>
+                        {% empty %}
+                            <div style="text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.95rem;">
+                                У вас пока нет загруженных достижений.
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <style>
+        @media (max-width: 768px) {
+            .profile-grid { grid-template-columns: 1fr !important; }
+        }
+    </style>
+
+    <script>
+        function sendAiMessage() {
+            const input = document.getElementById('ai-chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatLog = document.getElementById('ai-chat-log');
+
+            chatLog.innerHTML += `
+                <div style="align-self: flex-end; background: var(--accent); color: white; padding: 0.6rem 1rem; border-radius: 12px; border-bottom-right-radius: 2px; font-size: 0.9rem; max-width: 85%;">
+                    ${message}
+                </div>
+            `;
+            input.value = '';
+            chatLog.scrollTop = chatLog.scrollHeight;
+
+            fetch('/api/ai-chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(res => res.json())
+            .then(data => {
+                chatLog.innerHTML += `
+                    <div style="align-self: flex-start; background: #ECFDF5; color: var(--text-main); padding: 0.6rem 1rem; border-radius: 12px; border-bottom-left-radius: 2px; font-size: 0.9rem; max-width: 85%;">
+                        ${data.reply}
+                    </div>
+                `;
+                chatLog.scrollTop = chatLog.scrollHeight;
+            });
+        }
+
+        document.getElementById('ai-chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendAiMessage();
+            }
+        });
+
+        function deleteProject(projectId) {
+            if (!confirm("Вы уверены, что хотите удалить этот проект? Все задачи, чаты и участники будут безвозвратно удалены.")) {
+                return;
+            }
+
+            fetch(`/api/project/${projectId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    location.reload();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(err => console.error(err));
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,10 @@
+node_modules
+__pycache__
+*.pyc
+.env
+db.sqlite3
+media
+staticfiles
+.git
+board-client/node_modules
+sync-server/node_modules

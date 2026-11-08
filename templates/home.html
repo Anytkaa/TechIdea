@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная — Tech Idea Hub{% endblock %}
+
+{% block content %}
+    {% if not user.is_authenticated %}
+        <!-- ЛЕНДИНГ ДЛЯ ГОСТЕЙ -->
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 3rem; margin-top: 2rem;">
+            <div style="flex: 1;">
+                <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 1.5rem; color: var(--text-main); font-weight: 800;">
+                    Преврати свою идею в <span style="color: var(--accent);">успешный проект</span>
+                </h1>
+                <p style="font-size: 1.2rem; color: var(--text-muted); margin-bottom: 2.5rem;">
+                    Собери команду мечты, найди опытного наставника и начни разработку с удобным канбаном и чатом.
+                </p>
+                <div style="display: flex; gap: 1rem;">
+                    <a href="{% url 'register_idea' %}" class="btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;">У меня есть идея</a>
+                    <a href="{% url 'login' %}" class="btn-outline" style="font-size: 1.1rem; padding: 1rem 2rem;">Войти в профиль</a>
+                </div>
+                <p style="margin-top: 1.5rem;">
+                    <a href="{% url 'register_member' %}" style="color: var(--accent); text-decoration: none; font-weight: 600;">Я наставник / специалист →</a>
+                </p>
+            </div>
+            <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=400&q=80" style="width: 100%; height: 220px; object-fit: cover; border-radius: 24px; box-shadow: var(--shadow-md);">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=400&q=80" style="width: 100%; height: 220px; object-fit: cover; border-radius: 24px; box-shadow: var(--shadow-md); margin-top: 2rem;">
+                <img src="https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=400&q=80" style="width: 100%; height: 220px; object-fit: cover; border-radius: 24px; box-shadow: var(--shadow-md);">
+                <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&w=400&q=80" style="width: 100%; height: 220px; object-fit: cover; border-radius: 24px; box-shadow: var(--shadow-md); margin-top: 2rem;">
+            </div>
+        </div>
+
+    {% else %}
+        <!-- ЛИЧНЫЙ КАБИНЕТ (ВКЛАДКИ) -->
+        <div class="tabs-container" style="display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 2px solid #E5E7EB; padding-bottom: 1rem;">
+            <button id="tab-projects" onclick="switchTab('projects')" style="background: none; border: none; font-size: 1.2rem; font-weight: 700; color: var(--accent); cursor: pointer; padding-bottom: 0.5rem; border-bottom: 3px solid var(--accent); transition: 0.2s;">Проекты</button>
+            <button id="tab-specialists" onclick="switchTab('specialists')" style="background: none; border: none; font-size: 1.2rem; font-weight: 700; color: var(--text-muted); cursor: pointer; padding-bottom: 0.5rem; border-bottom: 3px solid transparent; transition: 0.2s;">Специалисты</button>
+        </div>
+
+        <!-- ВКЛАДКА 1: ПРОЕКТЫ -->
+        <div id="content-projects">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="font-size: 2rem; color: var(--text-main); margin-bottom: 0.5rem;">Открытые проекты</h1>
+                    <p style="color: var(--text-muted);">Найдите команду, к которой хотите присоединиться.</p>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+                {% for project in projects %}
+                    <div class="card" style="padding: 1.5rem; display: flex; flex-direction: column;">
+                        <!-- Ссылка на детальную страницу проекта -->
+                        <h3 style="margin-bottom: 0.5rem; color: var(--text-main); font-size: 1.2rem;">
+                            <a href="{% url 'project_detail' project.id %}" style="text-decoration: none; color: inherit; transition: 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='inherit'">
+                                {{ project.title }}
+                            </a>
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; flex-grow: 1;">{{ project.idea.description|default:"Описание пока не добавлено."|truncatewords:15 }}</p>
+                        
+                        <div style="font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 1rem; background: #ECFDF5; padding: 0.5rem; border-radius: 8px;">
+                            Ищут:
+                            {% if project.idea.looking_for_mentor %}<span>Наставника </span>{% endif %}
+                            {% if project.idea.looking_for_specialist %}<span>Специалиста </span>{% endif %}
+                            {% if project.idea.looking_for_consultant %}<span>Консультанта</span>{% endif %}
+                            {% if not project.idea.looking_for_mentor and not project.idea.looking_for_specialist and not project.idea.looking_for_consultant %}
+                                <span>Участников</span>
+                            {% endif %}
+                        </div>
+
+                        <button onclick="joinProject({{ project.id }})" class="btn-primary" style="width: 100%;">Присоединиться к команде</button>
+                    </div>
+                {% empty %}
+                    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                        Пока нет открытых проектов. Загляните позже или создайте свой!
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: СПЕЦИАЛИСТЫ -->
+        <div id="content-specialists" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+                <div>
+                    <h1 style="font-size: 2rem; color: var(--text-main); margin-bottom: 0.5rem;">Специалисты</h1>
+                    <p style="color: var(--text-muted);">Найдите экспертов для своего проекта.</p>
+                </div>
+                
+                <select id="roleFilter" onchange="filterSpecialists()" style="padding: 0.5rem 1rem; border: 1px solid #E5E7EB; border-radius: 8px; outline: none; background: white; font-family: inherit;">
+                    <option value="all">Все роли</option>
+                    <option value="mentor">Наставники</option>
+                    <option value="specialist">Специалисты</option>
+                    <option value="consultant">Консультанты</option>
+                </select>
+            </div>
+
+            <div id="specialists-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+                {% for spec in specialists %}
+                    <div class="card specialist-card" data-role="{{ spec.role }}" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-start;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; width: 100%;">
+                            <div style="width: 50px; height: 50px; background: #ECFDF5; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 1.2rem; color: var(--accent); font-weight: bold; overflow: hidden;">
+                                {% if spec.photo %}
+                                    <img src="{{ spec.photo.url }}" style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                    {{ spec.first_name|first|default:spec.username|first|upper }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <!-- Ссылка на публичный профиль -->
+                                <h3 style="margin-bottom: 0.2rem; color: var(--text-main); font-size: 1.1rem;">
+                                    <a href="{% url 'public_profile' spec.id %}" style="text-decoration: none; color: inherit; transition: 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='inherit'">
+                                        {{ spec.first_name|default:spec.username }}
+                                    </a>
+                                </h3>
+                                <span style="background: #ECFDF5; color: var(--accent); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">{{ spec.get_role_display }}</span>
+                            </div>
+                        </div>
+                        
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; flex-grow: 1;">
+                            {{ spec.about|default:"Пользователь пока не заполнил информацию о себе."|truncatewords:20 }}
+                        </p>
+
+                        {% if user.role == 'idea_owner' %}
+                            <button onclick="openInviteModal({{ spec.id }}, '{{ spec.first_name|default:spec.username }}')" class="btn-primary" style="width: 100%;">Пригласить в проект</button>
+                        {% else %}
+                            <div style="width: 100%; text-align: center; padding: 0.5rem; background: #F3F4F6; color: #9CA3AF; border-radius: 8px; font-size: 0.9rem;">Только для владельцев идей</div>
+                        {% endif %}
+                    </div>
+                {% empty %}
+                    <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                        Специалистов пока нет.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- МОДАЛЬНОЕ ОКНО ДЛЯ ПРИГЛАШЕНИЯ СПЕЦИАЛИСТА -->
+    <div id="inviteModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="card" style="padding: 2rem; width: 90%; max-width: 400px; background: white;">
+            <h3 style="margin-bottom: 1rem; color: var(--text-main);">Пригласить <span id="inviteName" style="color: var(--accent);"></span></h3>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-muted);">Выберите ваш проект:</label>
+                <select id="inviteProjectSelect" style="width: 100%; padding: 0.75rem; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB;">
+                    {% for proj in my_projects %}
+                        <option value="{{ proj.id }}">{{ proj.title }}</option>
+                    {% empty %}
+                        <option value="">У вас нет проектов</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="closeInviteModal()" class="btn-outline" style="flex: 1;">Отмена</button>
+                <button onclick="sendInvite()" class="btn-primary" style="flex: 1;">Отправить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            const btnProj = document.getElementById('tab-projects');
+            const btnSpec = document.getElementById('tab-specialists');
+            const contentProj = document.getElementById('content-projects');
+            const contentSpec = document.getElementById('content-specialists');
+
+            if (tab === 'projects') {
+                btnProj.style.color = 'var(--accent)'; btnProj.style.borderBottomColor = 'var(--accent)';
+                btnSpec.style.color = 'var(--text-muted)'; btnSpec.style.borderBottomColor = 'transparent';
+                contentProj.style.display = 'block'; contentSpec.style.display = 'none';
+            } else {
+                btnSpec.style.color = 'var(--accent)'; btnSpec.style.borderBottomColor = 'var(--accent)';
+                btnProj.style.color = 'var(--text-muted)'; btnProj.style.borderBottomColor = 'transparent';
+                contentSpec.style.display = 'block'; contentProj.style.display = 'none';
+            }
+        }
+
+        function filterSpecialists() {
+            const role = document.getElementById('roleFilter').value;
+            const cards = document.querySelectorAll('.specialist-card');
+            
+            cards.forEach(card => {
+                if (role === 'all' || card.dataset.role === role) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        function joinProject(projectId) {
+            fetch(`/api/project/${projectId}/join/`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'}
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) { alert('Заявка отправлена!'); location.reload(); }
+                else alert('Ошибка: ' + data.error);
+            });
+        }
+
+        let currentSpecialistId = null;
+        
+        function openInviteModal(id, name) {
+            currentSpecialistId = id;
+            document.getElementById('inviteName').innerText = name;
+            document.getElementById('inviteModal').style.display = 'flex';
+        }
+
+        function closeInviteModal() {
+            document.getElementById('inviteModal').style.display = 'none';
+        }
+
+        function sendInvite() {
+            const projectId = document.getElementById('inviteProjectSelect').value;
+            if (!projectId) return alert("Выберите проект");
+
+            fetch('/api/invite-specialist/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: JSON.stringify({ user_id: currentSpecialistId, project_id: projectId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    alert('Приглашение отправлено!');
+                    closeInviteModal();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            });
+        }
+    </script>
+{% endblock %}

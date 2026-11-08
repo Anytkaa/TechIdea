@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # 1. База данных PostgreSQL
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: teamapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    # Проверяем, что база готова принимать подключения
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d teamapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis (для чата и синхронизации)
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  # 3. Django-приложение
+  web:
+    build: .
+    # Запускаем миграции и сервер (без ожидания pg_isready)
+    command: >
+      sh -c "python manage.py migrate &&
+             daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    volumes:
+      - .:/app
+      - media_volume:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=teamapp
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_HOST=db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy # Ждем, пока база не станет "здоровой"
+      redis:
+        condition: service_started
+
+  # 4. React-доска
+  board:
+    build: ./board-client
+    volumes:
+      - ./board-client:/app
+      - /app/node_modules
+    ports:
+      - "5174:5173"
+
+volumes:
+  postgres_data:
+  media_volume:

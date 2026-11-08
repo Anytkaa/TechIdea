@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация идеи — Tech Idea Hub</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: #F3F4F6; display: flex; min-height: 100vh; }
+        
+        .split-left { flex: 1; background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); display: flex; flex-direction: column; justify-content: center; padding: 4rem; color: white; position: sticky; top: 0; height: 100vh; }
+        .split-left h1 { font-size: 2.8rem; font-weight: 700; line-height: 1.2; margin-bottom: 1.5rem; }
+        .split-left ul { list-style: none; padding: 0; margin-top: 2rem; }
+        .split-left li { display: flex; align-items: center; margin-bottom: 1rem; font-size: 1.1rem; opacity: 0.9; }
+        .split-left li::before { content: '✓'; display: inline-block; width: 24px; height: 24px; background: rgba(255,255,255,0.2); border-radius: 50%; text-align: center; line-height: 24px; margin-right: 10px; font-size: 0.8rem; }
+
+        .split-right { flex: 1; padding: 3rem 2rem; display: flex; justify-content: center; }
+        .form-card { background: white; padding: 3rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; height: fit-content; }
+        .form-card h2 { font-size: 1.8rem; color: #111827; margin-bottom: 0.5rem; }
+        .form-card p.subtitle { color: #6B7280; margin-bottom: 2rem; font-size: 0.95rem; }
+        
+        .section-title { font-size: 1.1rem; font-weight: 600; color: #374151; margin: 2rem 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid #E5E7EB; }
+        
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-weight: 500; color: #374151; margin-bottom: 0.4rem; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #E5E7EB; border-radius: 8px; font-size: 0.95rem; transition: all 0.2s ease; outline: none; background: #FAFAFA; }
+        .form-control:focus { border-color: #4F46E5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); background: white; }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+        
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; margin-top: 1rem; }
+        .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; accent-color: #4F46E5; }
+        
+        .file-upload { border: 2px dashed #E5E7EB; border-radius: 8px; padding: 1.5rem; text-align: center; color: #6B7280; cursor: pointer; transition: 0.2s; }
+        .file-upload:hover { border-color: #4F46E5; background: #F3F4F6; }
+        .file-upload input[type="file"] { display: none; }
+        
+        .btn-submit { width: 100%; padding: 1rem; background: #4F46E5; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 2rem; }
+        .btn-submit:hover { background: #4338CA; transform: translateY(-1px); }
+        
+        .bottom-links { margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: #6B7280; }
+        .bottom-links a { color: #4F46E5; text-decoration: none; font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="split-left">
+        <h1>Превратите свою идею в реальность</h1>
+        <p style="font-size: 1.1rem; opacity: 0.9;">Создайте профиль, чтобы найти команду, наставника и начать работу над проектом.</p>
+        <ul>
+            <li>Удобный канбан для работы над этапами</li>
+            <li>Чат с вашей командой</li>
+            <li>Помощь опытных наставников</li>
+        </ul>
+    </div>
+
+    <div class="split-right">
+        <div class="form-card">
+            <h2>Создание профиля</h2>
+            <p class="subtitle">Заполните информацию о себе и вашей идее.</p>
+            
+            <!-- Обязательно enctype для загрузки файлов -->
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="section-title">1. Данные аккаунта</div>
+                
+                <div class="form-group">
+                    <label>Фотография профиля</label>
+                    <input type="file" name="photo" accept="image/*" class="form-control" style="padding: 0.5rem;">
+                </div>
+
+                <div class="form-group">
+                    <label>Логин</label>
+                    <input type="text" name="username" class="form-control" placeholder="Придумайте логин" required>
+                </div>
+                <div class="form-group">
+                    <label>Пароль</label>
+                    <input type="password" name="password" class="form-control" placeholder="Придумайте пароль" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" class="form-control" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>ФИО</label>
+                    <input type="text" name="first_name" class="form-control" placeholder="Иванов Иван Иванович" required>
+                </div>
+
+                <div class="section-title">2. Идея проекта</div>
+                <div class="form-group">
+                    <label>Название проекта</label>
+                    <input type="text" name="title" class="form-control" placeholder="Например: Эко-стартап" required>
+                </div>
+                <div class="form-group">
+                    <label>Цель проекта</label>
+                    <textarea name="goal" class="form-control" placeholder="Кратко опишите главную цель..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>План работ</label>
+                    <textarea name="work_plan" class="form-control" placeholder="Основные этапы разработки..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Описание идеи</label>
+                    <textarea name="description" class="form-control" placeholder="Расскажите подробнее о вашей идее..."></textarea>
+                </div>
+
+                <div class="section-title">3. Материалы (необязательно)</div>
+                <label class="file-upload">
+                    <input type="file" name="files" multiple>
+                    📎 Нажмите, чтобы прикрепить документы, презентации или видео
+                </label>
+
+                <div class="section-title">4. Кого вы ищете?</div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" name="looking_for_mentor" id="mentor">
+                    <label for="mentor" style="margin:0; font-weight:600;">Наставник</label>
+                </div>
+                <input type="text" name="mentor_competencies" class="form-control" placeholder="Какие компетенции нужны от наставника?" style="margin-bottom: 1rem;">
+
+                <div class="checkbox-group">
+                    <input type="checkbox" name="looking_for_specialist" id="spec">
+                    <label for="spec" style="margin:0; font-weight:600;">Специалист</label>
+                </div>
+                <input type="text" name="specialist_area" class="form-control" placeholder="В какой области нужен специалист?" style="margin-bottom: 1rem;">
+
+                <div class="checkbox-group">
+                    <input type="checkbox" name="looking_for_consultant" id="cons">
+                    <label for="cons" style="margin:0; font-weight:600;">Консультант</label>
+                </div>
+                <input type="text" name="consultant_area" class="form-control" placeholder="В чем нужна консультация?" style="margin-bottom: 1rem;">
+
+                <button type="submit" class="btn-submit">Зарегистрироваться</button>
+            </form>
+
+            <div class="bottom-links">
+                Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+                <br><br>
+                <a href="{% url 'home' %}" style="color: #9CA3AF; font-weight: 500;">← На главную</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
